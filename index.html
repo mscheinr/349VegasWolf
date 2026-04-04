@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Vegas Wolf</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --green-deep:#0d2c1a;--green-mid:#1a4a2e;--green-light:#2d6b42;
+      --gold:#d4a843;--gold-light:#f0c865;
+      --text:#e8e0d0;--text-dim:#8a9e8f;--red:#e05a5a;
+      --birdie:#4fc3f7;--birdie-bg:rgba(79,195,247,0.12);--birdie-border:rgba(79,195,247,0.35);
+      --card-bg:rgba(255,255,255,0.06);--card-border:rgba(212,168,67,0.2);--good:#6dbb8a;
+    }
+    html,body{height:100%;background:var(--green-deep)}
+    body{font-family:'DM Sans',sans-serif;color:var(--text)}
+    #root{min-height:100vh}
+    .app{min-height:100vh;background:radial-gradient(ellipse at 20% 0%,rgba(45,107,66,0.4) 0%,transparent 50%),radial-gradient(ellipse at 80% 100%,rgba(212,168,67,0.1) 0%,transparent 50%),var(--green-deep);display:flex;flex-direction:column;align-items:center;padding-bottom:40px}
+    .screen{width:100%;max-width:520px;padding:24px 20px;animation:fadeUp .24s ease}
+    .top-bar{width:100%;max-width:520px;display:flex;justify-content:space-between;gap:8px;padding:12px 20px 0}
+    .top-bar-right{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes birdiePop{0%{transform:scale(1)}50%{transform:scale(1.25)}100%{transform:scale(1)}}
+    .setup-header,.scorecard-header{text-align:center;padding:28px 0 24px}
+    .logo-mark,.trophy{font-size:52px;filter:drop-shadow(0 0 20px rgba(212,168,67,0.4));margin-bottom:8px}
+    h1,h2,.edit-list-title,.result-verdict{font-family:'Bebas Neue',sans-serif;letter-spacing:2px;color:var(--gold)}
+    h1{font-size:58px;line-height:1}
+    h2{font-size:42px}
+    .tagline{color:var(--text-dim);font-size:13px;letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+    .setup-card,.panel,.summary-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:20px;backdrop-filter:blur(8px)}
+    .section-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+    .label-note{font-weight:400;color:var(--text-dim);letter-spacing:0;text-transform:none;font-size:11px}
+    .player-input-row,.stake-row,.meta-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .player-num{width:28px;font-size:12px;font-weight:600;color:var(--text-dim);flex-shrink:0}
+    .text-input,.mini-input,.score-num-input,select{flex:1;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;outline:none}
+    .text-input:focus,.mini-input:focus,.score-num-input:focus,select:focus{border-color:var(--gold)}
+    .text-input::placeholder,.mini-input::placeholder,.score-num-input::placeholder{color:var(--text-dim)}
+    select{appearance:none}
+    input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+    .dollar-sign{color:var(--gold);font-size:20px;font-weight:700;width:18px}
+    .stake-input{max-width:120px}
+    .per-point{color:var(--text-dim);font-size:13px}
+    .toggle-row,.holes-toggle{display:flex;gap:8px;flex-wrap:wrap}
+    .toggle-btn,.ghost-btn,.icon-btn,.edit-log-btn,.back-btn,.chip-btn{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--text-dim);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .18s}
+    .toggle-btn.active,.chip-btn.active{background:var(--gold);border-color:var(--gold);color:var(--green-deep);font-weight:700}
+    .start-btn,.next-btn,.submit-btn,.next-hole-btn,.new-round-btn{width:100%;margin-top:20px;padding:16px;border-radius:12px;border:none;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:all .18s;letter-spacing:.4px}
+    .start-btn.ready,.next-btn.ready,.submit-btn.ready,.next-hole-btn,.new-round-btn{background:linear-gradient(135deg,var(--gold) 0%,var(--gold-light) 100%);color:var(--green-deep);box-shadow:0 4px 20px rgba(212,168,67,.3)}
+    .start-btn.disabled,.next-btn.disabled,.submit-btn.disabled{background:rgba(255,255,255,.08);color:var(--text-dim);cursor:not-allowed}
+    .top-note{font-size:12px;color:var(--text-dim);line-height:1.5;margin-top:10px}
+    .rules-teaser{margin-top:20px}
+    .rules-teaser summary{color:var(--text-dim);font-size:13px;cursor:pointer;text-align:center;list-style:none;padding:8px}
+    .rules-teaser summary::-webkit-details-marker{display:none}
+    .rules-body{background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:16px;margin-top:8px}
+    .rules-body p{font-size:13px;color:var(--text-dim);margin-bottom:8px;line-height:1.5}
+    .rules-body strong{color:var(--text)}
+    .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+    .meta-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px}
+    .meta-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px}
+    .meta-value{font-size:18px;font-weight:700;color:var(--text)}
+    .hole-header,.result-header{display:flex;align-items:center;gap:16px;margin-bottom:20px}
+    .hole-badge{background:linear-gradient(135deg,var(--gold) 0%,var(--gold-light) 100%);border-radius:12px;padding:10px 16px;text-align:center;min-width:70px;box-shadow:0 4px 16px rgba(212,168,67,.25)}
+    .hole-badge.small{min-width:54px;padding:8px 12px}
+    .hole-label{display:block;font-size:9px;font-weight:700;letter-spacing:2px;color:var(--green-deep);opacity:.72}
+    .hole-num{display:block;font-family:'Bebas Neue',sans-serif;font-size:38px;color:var(--green-deep);line-height:1}
+    .hole-badge.small .hole-num{font-size:28px}
+    .hole-meta{flex:1}
+    .wolf-badge{font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px}
+    .wolf-name{color:var(--gold)}
+    .hole-progress{font-size:12px;color:var(--text-dim)}
+    .partner-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:16px}
+    .partner-btn{background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:16px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:all .18s;color:var(--text);font-family:'DM Sans',sans-serif}
+    .partner-btn.selected{background:rgba(212,168,67,.15);border-color:var(--gold);box-shadow:0 0 16px rgba(212,168,67,.2)}
+    .lone-wolf-btn.selected{background:rgba(224,90,90,.12);border-color:var(--red);box-shadow:0 0 16px rgba(224,90,90,.2)}
+    .partner-icon{font-size:28px}
+    .partner-pname{font-size:15px;font-weight:600;text-align:center}
+    .lone-note{font-size:11px;color:var(--red);font-weight:700}
+    .matchup-preview,.birdie-notice,.front-nine-banner,.status-banner{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px 14px;margin-bottom:14px}
+    .matchup-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;text-align:center}
+    .matchup-team{font-size:13px;font-weight:600}
+    .wolf-team{color:var(--gold)}
+    .other-team{color:var(--text-dim)}
+    .vs{font-size:11px;color:var(--text-dim);font-weight:700;letter-spacing:1px}
+    .score-inputs{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+    .score-row{display:flex;align-items:center;justify-content:space-between;background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:12px 14px;transition:all .18s;gap:12px}
+    .score-row.is-wolf{border-color:rgba(212,168,67,.4);background:rgba(212,168,67,.06)}
+    .score-row.is-partner{border-color:rgba(45,107,66,.6);background:rgba(45,107,66,.12)}
+    .score-row.is-birdie{border-color:var(--birdie-border);background:var(--birdie-bg)}
+    .score-player-info{display:flex;align-items:center;gap:8px;flex:1;min-width:0;flex-wrap:wrap}
+    .score-name{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .role-tag{font-size:10px;font-weight:700;letter-spacing:1px;padding:2px 6px;border-radius:4px;text-transform:uppercase;flex-shrink:0}
+    .wolf-tag{background:rgba(212,168,67,.2);color:var(--gold)}
+    .partner-tag{background:rgba(45,107,66,.4);color:var(--good)}
+    .opp-tag{background:rgba(224,90,90,.15);color:var(--red)}
+    .score-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+    .birdie-btn{width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;opacity:.45}
+    .birdie-btn.birdie-on{opacity:1;background:var(--birdie-bg);border-color:var(--birdie-border);box-shadow:0 0 10px rgba(79,195,247,.25);animation:birdiePop .3s ease}
+    .score-stepper{display:flex;align-items:center;gap:6px}
+    .step-btn{width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:var(--text);font-size:20px;font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .score-num-input{width:50px;text-align:center;padding:6px 2px;font-family:'Bebas Neue',sans-serif;font-size:28px}
+    .score-actions{display:flex;gap:10px}
+    .submit-btn{margin-top:0;flex:1}
+    .stake-panel{margin-bottom:16px}
+    .stake-panel .stake-row{margin-bottom:0}
+    .result-verdict{font-size:30px;line-height:1.1;flex:1}
+    .result-verdict.tie{color:var(--text-dim)}
+    .vegas-display{background:rgba(0,0,0,.3);border:1px solid rgba(212,168,67,.2);border-radius:14px;padding:16px;display:flex;align-items:center;justify-content:space-around;gap:12px;margin-bottom:20px}
+    .vegas-team{text-align:center;flex:1}
+    .vt-label{font-size:11px;color:var(--text-dim);margin-bottom:6px}
+    .vegas-num{font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:3px;color:var(--text-dim);line-height:1;display:inline-flex;align-items:baseline;gap:4px}
+    .vegas-team.winner .vegas-num{color:var(--gold);text-shadow:0 0 20px rgba(212,168,67,.4)}
+    .flipped-num{color:var(--birdie)!important;text-shadow:0 0 16px rgba(79,195,247,.4)!important}
+    .flip-indicator{font-size:18px;opacity:.8}
+    .vegas-sep{font-size:12px;color:var(--text-dim);font-weight:700;letter-spacing:1px}
+    .hole-delta-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:24px}
+    .delta-cell{background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:10px 6px;text-align:center}
+    .delta-cell.pos{border-color:rgba(109,187,138,.4);background:rgba(109,187,138,.06)}
+    .delta-cell.neg{border-color:rgba(224,90,90,.3);background:rgba(224,90,90,.06)}
+    .dc-name{font-size:10px;color:var(--text-dim);margin-bottom:4px}
+    .dc-val{font-size:14px;font-weight:700}
+    .delta-cell.pos .dc-val{color:var(--good)}
+    .delta-cell.neg .dc-val{color:var(--red)}
+    .delta-cell.zero .dc-val{color:var(--text-dim)}
+    .totals-list,.edit-hole-list{display:flex;flex-direction:column;gap:8px}
+    .total-row,.summary-row,.edit-hole-row{display:flex;align-items:center;gap:12px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:12px 14px}
+    .total-row.leader{background:rgba(212,168,67,.08);border-color:rgba(212,168,67,.35)}
+    .rank-num{font-size:12px;color:var(--text-dim);width:28px;font-weight:700}
+    .total-name,.summary-name{flex:1;font-size:15px;font-weight:500}
+    .total-amount,.summary-amount{font-size:18px;font-weight:700}
+    .total-amount.pos,.summary-amount.pos{color:var(--good)}
+    .total-amount.neg,.summary-amount.neg{color:var(--red)}
+    .subsection-title{font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin:18px 0 10px}
+    .summary-grid{display:grid;gap:18px}
+    .edit-list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+    .edit-list-title{font-size:32px}
+    .empty-edit{text-align:center;color:var(--text-dim);padding:40px 0;font-size:14px}
+    .ehr-hole{background:linear-gradient(135deg,var(--gold) 0%,var(--gold-light) 100%);border-radius:8px;padding:6px 10px;text-align:center;min-width:46px;flex-shrink:0}
+    .ehr-hole-label{display:block;font-size:8px;font-weight:700;letter-spacing:1.5px;color:var(--green-deep);opacity:.7}
+    .ehr-hole-num{display:block;font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--green-deep);line-height:1}
+    .ehr-info{flex:1;min-width:0}
+    .ehr-wolf{font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px}
+    .ehr-birdie-badge{color:var(--birdie);font-size:12px;font-weight:400}
+    .ehr-scores{display:flex;flex-wrap:wrap;gap:5px}
+    .ehr-score-pill{font-size:11px;color:var(--text-dim);background:rgba(255,255,255,.06);border-radius:4px;padding:2px 6px}
+    .ehr-score-pill.birdie-pill{color:var(--birdie);background:var(--birdie-bg);border:1px solid var(--birdie-border)}
+    .edit-arrow{font-size:16px;flex-shrink:0}
+    .podium{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
+    .podium-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:16px;text-align:center}
+    .rank-1{border-color:var(--gold);background:rgba(212,168,67,.1)}
+    .podium-rank{font-size:28px;margin-bottom:6px}
+    .podium-name{font-size:16px;font-weight:600;margin-bottom:4px}
+    .podium-total{font-size:22px;font-weight:700}
+    .podium-total.pos{color:var(--good)}
+    .podium-total.neg{color:var(--red)}
+    .log-table{background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.06);border-radius:12px;overflow:hidden;font-size:12px}
+    .log-header-row,.log-data-row,.log-total-row{display:grid;grid-template-columns:42px 56px repeat(var(--player-count),1fr);padding:8px 12px;gap:4px;align-items:center}
+    .log-header-row{background:rgba(212,168,67,.1);color:var(--gold);font-weight:700;font-size:11px;letter-spacing:.5px}
+    .log-data-row{border-top:1px solid rgba(255,255,255,.04);color:var(--text-dim)}
+    .log-total-row{border-top:1px solid rgba(255,255,255,.1);font-weight:700;color:var(--text);background:rgba(255,255,255,.04)}
+    .log-pos{color:var(--good)}
+    .log-neg{color:var(--red)}
+    .footer-note{margin-top:16px;font-size:12px;color:var(--text-dim);line-height:1.5}
+    @media (max-width:560px){.screen{padding:20px 14px}.top-bar{padding:10px 14px 0}.podium{grid-template-columns:1fr 1fr}.partner-grid{grid-template-columns:1fr 1fr}}
+  
+.golf-scorecard-wrap{display:flex;flex-direction:column;gap:16px;margin-bottom:18px}
+.golf-scorecard{background:rgba(0,0,0,0.22);border:1px solid rgba(255,255,255,0.08);border-radius:14px;overflow:auto}
+.golf-scorecard-title{padding:12px 14px;background:rgba(212,168,67,0.08);color:var(--gold);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.golf-scorecard-table{width:100%;border-collapse:collapse;font-size:12px;min-width:620px}
+.golf-scorecard-table th,.golf-scorecard-table td{padding:8px 6px;text-align:center;border-top:1px solid rgba(255,255,255,0.05)}
+.golf-scorecard-table thead th{border-top:none;color:var(--gold);font-size:11px;background:rgba(255,255,255,0.03)}
+.golf-scorecard-table th.sticky-col,.golf-scorecard-table td.sticky-col{position:sticky;left:0;background:var(--green-deep);z-index:1;text-align:left;padding-left:12px;min-width:90px}
+.golf-scorecard-table thead th.sticky-col{z-index:2;background:rgba(22,58,36,0.98)}
+.golf-scorecard-table tbody tr:nth-child(odd) td:not(.sticky-col){background:rgba(255,255,255,0.015)}
+.golf-scorecard-table td.section-total,.golf-scorecard-table th.section-total{font-weight:700;background:rgba(255,255,255,0.04)}
+.golf-scorecard-table td.grand-total,.golf-scorecard-table th.grand-total{font-weight:700;background:rgba(212,168,67,0.08)}
+.scorecard-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+.secondary-btn{padding:14px 18px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer}
+
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useMemo } = React;
+
+const STORAGE_KEY = 'vegas-wolf-shareable-v2';
+const DEFAULT_PLAYERS = ['', '', '', ''];
+const EMPTY_BIRDIES = count => Array(count).fill(false);
+const EMPTY_TOTALS = count => Array(count).fill(0);
+
+function clampPositiveInt(value, fallback = '') {
+  if (value === '') return '';
+  const parsed = parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function vegasScoreFromPair(a, b) {
+  const lo = Math.min(a, b);
+  const hi = Math.max(a, b);
+  return lo * 10 + hi;
+}
+
+function formatVegas(n) {
+  return `${Math.floor(n / 10)}${n % 10}`;
+}
+
+function flipVegas(n) {
+  const lo = Math.floor(n / 10);
+  const hi = n % 10;
+  return hi * 10 + lo;
+}
+
+function getOpposingIndices(playerCount, wolfIdx, partnerIdx) {
+  return [...Array(playerCount).keys()].filter(i => i !== wolfIdx && i !== partnerIdx);
+}
+
+function getTeamComposite(scoreIndices, scores) {
+  const ordered = scoreIndices
+    .map(i => ({ idx: i, score: scores[i] }))
+    .sort((a, b) => a.score - b.score || a.idx - b.idx);
+
+  if (ordered.length === 2) {
+    return {
+      value: vegasScoreFromPair(ordered[0].score, ordered[1].score),
+      countedIndices: ordered.map(x => x.idx),
+      ignoredIndices: [],
+      label: `${ordered[0].score}/${ordered[1].score}`,
+    };
+  }
+
+  const low = ordered[0];
+  const high = ordered[ordered.length - 1];
+  return {
+    value: vegasScoreFromPair(low.score, high.score),
+    countedIndices: [low.idx, high.idx],
+    ignoredIndices: ordered.slice(1, -1).map(x => x.idx),
+    label: `${low.score}/${high.score}`,
+  };
+}
+
+function calculateHoleResult({ scores, wolfIdx, partnerIdx, isLoneWolf, stake, birdies, playerCount, junkValue = 0, greenieIdx = null, putt3Idx = null, sandyIdx = null }) {
+  const hasBirdie = (birdies || []).some(Boolean);
+  const delta = Array(playerCount).fill(0);
+  const normalizedJunk = Number.isFinite(junkValue) ? junkValue : 0;
+
+  function applyWinnerFromOthers(winnerIdx, amount) {
+    if (winnerIdx == null || amount <= 0) return;
+    [...Array(playerCount).keys()].forEach(i => {
+      if (i === winnerIdx) return;
+      delta[winnerIdx] += amount;
+      delta[i] -= amount;
+    });
+  }
+
+  function applyLoserToOthers(loserIdx, amount) {
+    if (loserIdx == null || amount <= 0) return;
+    [...Array(playerCount).keys()].forEach(i => {
+      if (i === loserIdx) return;
+      delta[loserIdx] -= amount;
+      delta[i] += amount;
+    });
+  }
+
+  let baseWinner = 'tie';
+  let wolfTeamVegas = null;
+  let otherTeamVegas = null;
+  let flippedTeam = null;
+  let birdieFlipped = false;
+  let points = 0;
+  let wolfTeamIndices = [wolfIdx];
+  let opponentTeamIndices = getOpposingIndices(playerCount, wolfIdx, null);
+  let counted = { wolf: [wolfIdx], other: [] };
+  let ignored = { wolf: [], other: [] };
+
+  if (isLoneWolf) {
+    let wolfNet = 0;
+    opponentTeamIndices.forEach(oppIdx => {
+      const diff = scores[oppIdx] - scores[wolfIdx];
+      let pts = diff * stake * 2;
+      if (hasBirdie && (birdies[wolfIdx] || birdies[oppIdx])) pts *= 2;
+      wolfNet += pts;
+      delta[oppIdx] -= pts;
+    });
+    delta[wolfIdx] = wolfNet;
+    baseWinner = wolfNet > 0 ? 'wolf' : wolfNet < 0 ? 'other' : 'tie';
+  } else {
+    wolfTeamIndices = [wolfIdx, partnerIdx];
+    opponentTeamIndices = getOpposingIndices(playerCount, wolfIdx, partnerIdx);
+    let wolfComposite = getTeamComposite(wolfTeamIndices, scores);
+    let otherComposite = getTeamComposite(opponentTeamIndices, scores);
+
+    if (hasBirdie) {
+      const rawDiff = otherComposite.value - wolfComposite.value;
+      const wolfBirdie = wolfTeamIndices.some(i => birdies?.[i]);
+      const otherBirdie = opponentTeamIndices.some(i => birdies?.[i]);
+
+      if (playerCount === 5) {
+        if (rawDiff > 0 && wolfBirdie) {
+          otherComposite = { ...otherComposite, value: flipVegas(otherComposite.value) };
+          birdieFlipped = true;
+          flippedTeam = 'other';
+        } else if (rawDiff < 0 && otherBirdie) {
+          wolfComposite = { ...wolfComposite, value: flipVegas(wolfComposite.value) };
+          birdieFlipped = true;
+          flippedTeam = 'wolf';
+        }
+      } else {
+        if (rawDiff > 0) {
+          otherComposite = { ...otherComposite, value: flipVegas(otherComposite.value) };
+          birdieFlipped = true;
+          flippedTeam = 'other';
+        } else if (rawDiff < 0) {
+          wolfComposite = { ...wolfComposite, value: flipVegas(wolfComposite.value) };
+          birdieFlipped = true;
+          flippedTeam = 'wolf';
+        }
+      }
+    }
+
+    const diff = otherComposite.value - wolfComposite.value;
+    points = Math.abs(diff) * stake;
+    if (diff > 0) {
+      wolfTeamIndices.forEach(i => { delta[i] += points; });
+      const losingShare = wolfTeamIndices.length * points / opponentTeamIndices.length;
+      opponentTeamIndices.forEach(i => { delta[i] -= losingShare; });
+      baseWinner = 'wolf';
+    } else if (diff < 0) {
+      opponentTeamIndices.forEach(i => { delta[i] += points; });
+      const losingShare = opponentTeamIndices.length * points / wolfTeamIndices.length;
+      wolfTeamIndices.forEach(i => { delta[i] -= losingShare; });
+      baseWinner = 'other';
+    } else {
+      baseWinner = 'tie';
+    }
+
+    wolfTeamVegas = formatVegas(wolfComposite.value);
+    otherTeamVegas = formatVegas(otherComposite.value);
+    counted = { wolf: wolfComposite.countedIndices, other: otherComposite.countedIndices };
+    ignored = { wolf: wolfComposite.ignoredIndices, other: otherComposite.ignoredIndices };
+  }
+
+  const junkEvents = [];
+  (birdies || []).forEach((isBirdie, i) => {
+    if (isBirdie && normalizedJunk > 0) {
+      applyWinnerFromOthers(i, normalizedJunk);
+      junkEvents.push(`${playersLabel(i)} birdie`);
+    }
+  });
+  if (greenieIdx != null && normalizedJunk > 0) {
+    applyWinnerFromOthers(greenieIdx, normalizedJunk);
+    junkEvents.push(`${playersLabel(greenieIdx)} greenie`);
+  }
+  if (sandyIdx != null && normalizedJunk > 0) {
+    applyWinnerFromOthers(sandyIdx, normalizedJunk);
+    junkEvents.push(`${playersLabel(sandyIdx)} sandy`);
+  }
+  if (putt3Idx != null && normalizedJunk > 0) {
+    applyLoserToOthers(putt3Idx, normalizedJunk);
+    junkEvents.push(`${playersLabel(putt3Idx)} 3-putt penalty`);
+  }
+
+  function playersLabel(i) {
+    return `P${i + 1}`;
+  }
+
+  return {
+    delta,
+    winner: baseWinner,
+    isLoneWolf: !!isLoneWolf,
+    wolfTeamVegas,
+    otherTeamVegas,
+    birdieFlipped,
+    flippedTeam,
+    hasBirdie,
+    usedStake: stake,
+    points,
+    junkValue: normalizedJunk,
+    greenieIdx,
+    putt3Idx,
+    sandyIdx,
+    wolfTeamIndices,
+    opponentTeamIndices,
+    counted,
+    ignored,
+    junkEvents,
+  };
+}
+
+function recomputeTotals(history, playerCount) {
+  const totals = EMPTY_TOTALS(playerCount);
+  history.forEach(h => {
+    const result = calculateHoleResult({
+      scores: h.scores,
+      wolfIdx: h.wolfIdx,
+      partnerIdx: h.partnerIdx,
+      isLoneWolf: !!h.isLoneWolf,
+      stake: h.stake,
+      birdies: h.birdies || EMPTY_BIRDIES(playerCount),
+      playerCount,
+      junkValue: h.junkValue || 0,
+      greenieIdx: h.greenieIdx ?? null,
+      putt3Idx: h.putt3Idx ?? null,
+      sandyIdx: h.sandyIdx ?? null,
+    });
+    result.delta.forEach((d, i) => totals[i] += d);
+  });
+  return totals;
+}
+
+function totalsThrough(history, holeLimit, playerCount) {
+  const totals = EMPTY_TOTALS(playerCount);
+  history.filter(h => h.hole <= holeLimit).forEach(h => {
+    (h.delta || EMPTY_TOTALS(playerCount)).forEach((d, i) => totals[i] += d);
+  });
+  return totals;
+}
+
+function usePersistentState(initialState) {
+  const [state, setState] = useState(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return initialState;
+      const parsed = JSON.parse(raw);
+      return { ...initialState, ...parsed };
+    } catch {
+      return initialState;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {}
+  }, [state]);
+
+  return [state, setState];
+}
+
+function makeInitialState() {
+  return {
+    phase: 'setup',
+    players: DEFAULT_PLAYERS,
+    playerCount: 4,
+    totalHoles: 18,
+    defaultStake: 1,
+    defaultJunk: 0,
+    currentHole: 1,
+    totals: EMPTY_TOTALS(4),
+    holeHistory: [],
+    lastResult: null,
+    lastScores: null,
+    lastPartnerIdx: null,
+    lastIsLoneWolf: false,
+    lastBirdies: EMPTY_BIRDIES(4),
+    lastWolfIdx: null,
+    editingHoleIdx: null,
+    preEditPhase: null,
+  };
+}
+
+function SetupScreen({ onStart }) {
+  const [playerCount, setPlayerCount] = useState(4);
+  const [players, setPlayers] = useState(DEFAULT_PLAYERS);
+  const [stake, setStake] = useState('1');
+  const [holeCount, setHoleCount] = useState(18);
+
+  useEffect(() => {
+    setPlayers(prev => {
+      const next = [...prev];
+      while (next.length < playerCount) next.push('');
+      return next.slice(0, playerCount);
+    });
+  }, [playerCount]);
+
+  const ready = players.length === playerCount && players.every(p => p.trim()) && parseFloat(stake) > 0;
+
+  return (
+    <div className="screen">
+      <div className="setup-header">
+        <div className="logo-mark">🐺</div>
+        <h1>Vegas Wolf</h1>
+        <p className="tagline">Golf game tracker, now 4 or 5 players</p>
+      </div>
+
+      <div className="setup-card">
+        <div className="section-label">Game Format</div>
+        <div className="toggle-row">
+          <button className={`toggle-btn${playerCount === 4 ? ' active' : ''}`} onClick={() => setPlayerCount(4)}>4 Players</button>
+          <button className={`toggle-btn${playerCount === 5 ? ' active' : ''}`} onClick={() => setPlayerCount(5)}>5 Players</button>
+        </div>
+        <div className="top-note">
+          {playerCount === 4
+            ? 'Classic format: Wolf + partner vs 2 opponents, with optional Lone Wolf.'
+            : '5-player format: Wolf + partner vs 3 opponents. The 3-player team uses its low and high scores to form the Vegas number.'}
+        </div>
+
+        <div className="section-label" style={{ marginTop: 24 }}>Players <span className="label-note">(tee order = Wolf rotation)</span></div>
+        {players.map((p, i) => (
+          <div key={i} className="player-input-row">
+            <span className="player-num">P{i + 1}</span>
+            <input
+              className="text-input"
+              placeholder={`Player ${i + 1} name`}
+              value={p}
+              onChange={e => {
+                const next = [...players];
+                next[i] = e.target.value;
+                setPlayers(next);
+              }}
+            />
+          </div>
+        ))}
+
+        <div className="section-label" style={{ marginTop: 24 }}>Default Stake</div>
+        <div className="stake-row">
+          <span className="dollar-sign">$</span>
+          <input className="text-input stake-input" type="number" min="0.25" step="0.25" value={stake} onChange={e => setStake(e.target.value)} />
+          <span className="per-point">per point</span>
+        </div>
+
+        <div className="section-label" style={{ marginTop: 24 }}>Holes</div>
+        <div className="holes-toggle">
+          {[9, 18].map(n => (
+            <button key={n} className={`toggle-btn${holeCount === n ? ' active' : ''}`} onClick={() => setHoleCount(n)}>{n} Holes</button>
+          ))}
+        </div>
+
+        <button className={`start-btn${ready ? ' ready' : ' disabled'}`} disabled={!ready}
+          onClick={() => onStart({
+            players: players.map(p => p.trim()),
+            playerCount,
+            defaultStake: parseFloat(stake),
+            totalHoles: holeCount,
+          })}>
+          Start Round
+        </button>
+      </div>
+
+      <div className="rules-teaser">
+        <details>
+          <summary>How this version works</summary>
+          <div className="rules-body">
+            <p><strong>Wolf rotates</strong> every hole in tee order.</p>
+            <p><strong>Hole stake and junk value are editable</strong> on every hole, and the last-used values carry forward.</p>
+            <p><strong>4-player mode:</strong> Wolf picks a partner or can go <strong>Lone Wolf</strong>.</p>
+            <p><strong>5-player mode:</strong> Wolf picks one partner. The other <strong>3-player team</strong> uses its <strong>low and high</strong> scores to make the Vegas number.</p>
+            <p><strong>Score summaries</strong> include running totals plus separate standings through <strong>9 holes</strong> and <strong>18/final</strong>.</p>
+            <p><strong>Persistence:</strong> the round auto-saves in your browser, so refreshing the page keeps your game.</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  );
+}
+
+function HoleScreen({
+  hole, players, playerCount, wolfIdx: defaultWolfIdx, totalHoles, onSubmit,
+  initialPartner, initialIsLoneWolf, initialScores, initialBirdies, initialStake, initialJunk,
+  initialGreenieIdx, initialPutt3Idx, initialSandyIdx, initialWolfIdx,
+  isEdit, onCancelEdit
+}) {
+  const [currentWolfIdx, setCurrentWolfIdx] = useState(initialWolfIdx ?? defaultWolfIdx);
+  const [partnerIdx, setPartnerIdx] = useState(initialPartner ?? null);
+  const [isLoneWolf, setIsLoneWolf] = useState(initialIsLoneWolf ?? false);
+  const [scores, setScores] = useState(initialScores ? initialScores.map(String) : Array(playerCount).fill(''));
+  const [birdies, setBirdies] = useState(initialBirdies ?? EMPTY_BIRDIES(playerCount));
+  const [greenieIdx, setGreenieIdx] = useState(initialGreenieIdx ?? null);
+  const [putt3Idx, setPutt3Idx] = useState(initialPutt3Idx ?? null);
+  const [sandyIdx, setSandyIdx] = useState(initialSandyIdx ?? null);
+  const [stake, setStake] = useState(initialStake != null ? String(initialStake) : '1');
+  const [junkValue, setJunkValue] = useState(initialJunk != null ? String(initialJunk) : '0');
+  const [step, setStep] = useState(isEdit ? 'scores' : 'partner');
+  const [showOrderEditor, setShowOrderEditor] = useState(false);
+
+  const canUseLoneWolf = playerCount === 4;
+  const partnersAvailable = [...Array(playerCount).keys()].filter(i => i !== currentWolfIdx);
+  const allScoresFilled = scores.every(s => clampPositiveInt(s) !== '');
+  const parsedStake = parseFloat(stake);
+  const stakeReady = Number.isFinite(parsedStake) && parsedStake > 0;
+  const parsedJunk = parseFloat(junkValue || '0');
+  const junkReady = Number.isFinite(parsedJunk) && parsedJunk >= 0;
+  const readyToScore = allScoresFilled && stakeReady && junkReady;
+  const teamSelected = partnerIdx !== null || isLoneWolf;
+
+  function updateScore(i, value) {
+    const next = [...scores];
+    next[i] = value;
+    setScores(next);
+  }
+
+  function toggleBirdie(i) {
+    const next = [...birdies];
+    next[i] = !next[i];
+    setBirdies(next);
+  }
+
+  function chooseWolf(nextWolfIdx) {
+    setCurrentWolfIdx(nextWolfIdx);
+    if (partnerIdx === nextWolfIdx) setPartnerIdx(null);
+    if (isLoneWolf && playerCount !== 4) setIsLoneWolf(false);
+  }
+
+  function submit() {
+    if (!readyToScore) return;
+    onSubmit({
+      wolfIdx: currentWolfIdx,
+      scores: scores.map(s => parseInt(s, 10)),
+      partnerIdx: isLoneWolf ? null : partnerIdx,
+      isLoneWolf,
+      birdies,
+      greenieIdx,
+      putt3Idx,
+      sandyIdx,
+      stake: parsedStake,
+      junkValue: parsedJunk,
+    });
+  }
+
+  const otherTeamIndices = isLoneWolf
+    ? [...Array(playerCount).keys()].filter(i => i !== currentWolfIdx)
+    : getOpposingIndices(playerCount, currentWolfIdx, partnerIdx);
+
+  return (
+    <div className="screen">
+      <div className="hole-header">
+        <div className="hole-badge">
+          <span className="hole-label">HOLE</span>
+          <span className="hole-num">{hole}</span>
+        </div>
+        <div className="hole-meta">
+          <div className="wolf-badge">🐺 <span className="wolf-name">{players[currentWolfIdx]}</span></div>
+          <div className="hole-progress">{isEdit ? 'Editing saved hole' : `${hole} of ${totalHoles}`}</div>
+        </div>
+        <div className="top-bar-right">
+          <button className="edit-log-btn" onClick={() => setShowOrderEditor(v => !v)}>Adjust Order</button>
+          {isEdit && <button className="icon-btn" onClick={onCancelEdit}>✕</button>}
+        </div>
+      </div>
+
+      {showOrderEditor && (
+        <div className="panel" style={{ marginBottom: 14 }}>
+          <div className="section-label">Wolf for this hole</div>
+          <div className="toggle-row" style={{ flexWrap: 'wrap' }}>
+            {players.map((name, i) => (
+              <button key={i} className={`toggle-btn${currentWolfIdx === i ? ' active' : ''}`} style={{ minWidth: 120 }} onClick={() => chooseWolf(i)}>{name}</button>
+            ))}
+          </div>
+          <div className="top-note">This changes the Wolf for this hole. You can also use it while editing a past hole.</div>
+        </div>
+      )}
+
+      {step === 'partner' && (
+        <div>
+          <div className="section-label">{players[currentWolfIdx]}, choose your partner</div>
+          <div className="partner-grid">
+            {partnersAvailable.map(i => (
+              <button key={i} className={`partner-btn${partnerIdx === i ? ' selected' : ''}`} onClick={() => { setPartnerIdx(i); setIsLoneWolf(false); }}>
+                <span className="partner-icon">🏌️</span>
+                <span className="partner-pname">{players[i]}</span>
+              </button>
+            ))}
+            {canUseLoneWolf && (
+              <button className={`partner-btn lone-wolf-btn${isLoneWolf ? ' selected' : ''}`} onClick={() => { setIsLoneWolf(true); setPartnerIdx(null); }}>
+                <span className="partner-icon">🐺</span>
+                <span className="partner-pname">Lone Wolf</span>
+                <span className="lone-note">2× stakes</span>
+              </button>
+            )}
+          </div>
+
+          {teamSelected && (
+            <div className="matchup-preview">
+              <div className="matchup-row">
+                {isLoneWolf ? (
+                  <>
+                    <span className="matchup-team wolf-team">🐺 {players[currentWolfIdx]}</span>
+                    <span className="vs">vs</span>
+                    <span className="matchup-team other-team">{otherTeamIndices.map(i => players[i]).join(', ')}</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="matchup-team wolf-team">🐺 {players[currentWolfIdx]} & {players[partnerIdx]}</span>
+                    <span className="vs">vs</span>
+                    <span className="matchup-team other-team">{otherTeamIndices.map(i => players[i]).join(' · ')}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          <button className={`next-btn${teamSelected ? ' ready' : ' disabled'}`} disabled={!teamSelected} onClick={() => setStep('scores')}>
+            Enter Scores →
+          </button>
+        </div>
+      )}
+
+      {step === 'scores' && (
+        <div>
+          <div className="section-label">{isEdit ? 'Edit hole details' : 'Enter hole details'}</div>
+
+          <div className="stake-panel panel">
+            <div className="stake-row" style={{ flexWrap: 'wrap' }}>
+              <span className="dollar-sign">$</span>
+              <input className="text-input stake-input" type="number" min="0.25" step="0.25" value={stake} onChange={e => setStake(e.target.value)} />
+              <span className="per-point" style={{ marginRight: 12 }}>stake for hole</span>
+              <span className="dollar-sign">$</span>
+              <input className="text-input stake-input" type="number" min="0" step="0.25" value={junkValue} onChange={e => setJunkValue(e.target.value)} />
+              <span className="per-point">junk bet</span>
+            </div>
+          </div>
+
+          {(partnerIdx !== null || isLoneWolf) && (
+            <div className="matchup-preview">
+              <div className="matchup-row">
+                {isLoneWolf ? (
+                  <>
+                    <span className="matchup-team wolf-team">🐺 {players[currentWolfIdx]}</span>
+                    <span className="vs">vs</span>
+                    <span className="matchup-team other-team">{otherTeamIndices.map(i => players[i]).join(', ')}</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="matchup-team wolf-team">🐺 {players[currentWolfIdx]} & {players[partnerIdx]}</span>
+                    <span className="vs">vs</span>
+                    <span className="matchup-team other-team">{otherTeamIndices.map(i => players[i]).join(' · ')}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="score-inputs">
+            {players.map((name, i) => {
+              const isWolf = i === currentWolfIdx;
+              const isPartner = !isLoneWolf && i === partnerIdx;
+              const isOpponent = !isWolf && !isPartner;
+              return (
+                <div key={i} className={`score-row${isWolf ? ' is-wolf' : ''}${isPartner ? ' is-partner' : ''}${birdies[i] ? ' is-birdie' : ''}`}>
+                  <div className="score-player-info">
+                    <span className="score-name">{name}</span>
+                    {isWolf && <span className="role-tag wolf-tag">Wolf</span>}
+                    {isPartner && <span className="role-tag partner-tag">Partner</span>}
+                    {isOpponent && <span className="role-tag opp-tag">Opp</span>}
+                  </div>
+                  <div className="score-right" style={{ gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    <button className={`birdie-btn${birdies[i] ? ' birdie-on' : ''}`} title="Birdie" onClick={() => toggleBirdie(i)}>🐦</button>
+                    <button className={`birdie-btn${greenieIdx === i ? ' birdie-on' : ''}`} title="Greenie" onClick={() => setGreenieIdx(greenieIdx === i ? null : i)}>G</button>
+                    <button className={`birdie-btn${putt3Idx === i ? ' birdie-on' : ''}`} title="3-putt penalty" onClick={() => setPutt3Idx(putt3Idx === i ? null : i)}>3P</button>
+                    <button className={`birdie-btn${sandyIdx === i ? ' birdie-on' : ''}`} title="Sandy" onClick={() => setSandyIdx(sandyIdx === i ? null : i)}>S</button>
+                    <div className="score-stepper">
+                      <button className="step-btn" onClick={() => updateScore(i, String(Math.max(1, (parseInt(scores[i], 10) || 0) - 1)))}>−</button>
+                      <input className="score-num-input" type="number" min="1" max="15" value={scores[i]} placeholder="—" onChange={e => updateScore(i, e.target.value)} />
+                      <button className="step-btn" onClick={() => updateScore(i, String((parseInt(scores[i], 10) || 0) + 1))}>+</button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {(birdies.some(Boolean) || greenieIdx != null || putt3Idx != null || sandyIdx != null) && (
+            <div className="birdie-notice">
+              {birdies.some(Boolean) && <>🐦 Birdies pay junk from every other player. </>}
+              {greenieIdx != null && <>• Greenie active. </>}
+              {sandyIdx != null && <>• Sandy active. </>}
+              {putt3Idx != null && <>• 3-putt penalty active. </>}
+              {!isLoneWolf && birdies.some(Boolean) && <>• Team birdie rule still flips the losing Vegas number when applicable.</>}
+            </div>
+          )}
+
+          {playerCount === 5 && !isLoneWolf && (
+            <div className="status-banner">
+              In 5-player mode, the 3-person team uses its <strong>low and high</strong> scores for the Vegas number. The middle score is ignored.
+            </div>
+          )}
+
+          <div className="score-actions">
+            {!isEdit && <button className="back-btn" onClick={() => setStep('partner')}>← Back</button>}
+            {isEdit && <button className="back-btn" onClick={onCancelEdit}>Cancel</button>}
+            <button className={`submit-btn${readyToScore ? ' ready' : ' disabled'}`} disabled={!readyToScore} onClick={submit}>
+              {isEdit ? 'Save Changes ✓' : 'Score Hole'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ResultScreen({ hole, result, players, playerCount, wolfIdx, partnerIdx, isLoneWolf, scores, birdies, totals, onNext, isLast, onEditHoles, showFrontNineBanner }) {
+  const birdieNames = (birdies || []).map((b, i) => b ? players[i] : null).filter(Boolean);
+  const wolfLabel = isLoneWolf ? players[wolfIdx] : [wolfIdx, partnerIdx].filter(v => v != null).map(i => players[i]).join(' & ');
+  const otherLabel = result.opponentTeamIndices.map(i => players[i]).join(playerCount === 5 ? ' · ' : ' & ');
+  const junkLines = [];
+  birdieNames.forEach(name => junkLines.push(`${name} birdie junk`));
+  if (result.greenieIdx != null) junkLines.push(`${players[result.greenieIdx]} greenie`);
+  if (result.sandyIdx != null) junkLines.push(`${players[result.sandyIdx]} sandy`);
+  if (result.putt3Idx != null) junkLines.push(`${players[result.putt3Idx]} 3-putt penalty`);
+
+  return (
+    <div className="screen">
+      <div className="result-header">
+        <div className="hole-badge small">
+          <span className="hole-label">HOLE</span>
+          <span className="hole-num">{hole}</span>
+        </div>
+        <div className={`result-verdict${result.winner === 'tie' ? ' tie' : ''}`}>
+          {isLoneWolf
+            ? (result.delta[wolfIdx] > 0 ? 'Wolf Wins!' : result.delta[wolfIdx] < 0 ? 'Wolf Falls' : 'Push')
+            : (result.winner === 'wolf' ? 'Wolf Team Wins!' : result.winner === 'other' ? 'Opp Team Wins!' : 'Push')}
+        </div>
+        <button className="icon-btn" onClick={onEditHoles}>✏️</button>
+      </div>
+
+      {showFrontNineBanner && (
+        <div className="front-nine-banner">
+          ✅ Front 9 complete. Final scorecard will include separate totals through 9 and through 18.
+        </div>
+      )}
+
+      {(birdieNames.length > 0 || junkLines.length > 0) && (
+        <div className="birdie-notice">
+          {birdieNames.length > 0 && <>🐦 {birdieNames.join(' & ')} birdied. </>}
+          {!isLoneWolf && result.birdieFlipped ? `${result.flippedTeam === 'wolf' ? 'Wolf team' : 'Opp team'} score flipped. ` : ''}
+          {isLoneWolf && birdieNames.length > 0 ? 'Lone Wolf birdie matchup doubled. ' : ''}
+          {result.junkValue > 0 && junkLines.length > 0 ? `Junk @ $${result.junkValue.toFixed(2)}: ${junkLines.join(' • ')}` : ''}
+        </div>
+      )}
+
+      {!isLoneWolf && (
+        <div className="vegas-display">
+          <div className={`vegas-team${result.winner === 'wolf' ? ' winner' : ''}`}>
+            <div className="vt-label">🐺 {wolfLabel}</div>
+            <div className={`vegas-num${result.birdieFlipped && result.flippedTeam === 'wolf' ? ' flipped-num' : ''}`}>
+              {result.wolfTeamVegas}
+              {result.birdieFlipped && result.flippedTeam === 'wolf' && <span className="flip-indicator">↩</span>}
+            </div>
+            {result.ignored.wolf.length > 0 && <div className="vt-label">Ignored: {result.ignored.wolf.map(i => players[i]).join(', ')}</div>}
+          </div>
+          <div className="vegas-sep">vs</div>
+          <div className={`vegas-team${result.winner === 'other' ? ' winner' : ''}`}>
+            <div className="vt-label">{otherLabel}</div>
+            <div className={`vegas-num${result.birdieFlipped && result.flippedTeam === 'other' ? ' flipped-num' : ''}`}>
+              {result.otherTeamVegas}
+              {result.birdieFlipped && result.flippedTeam === 'other' && <span className="flip-indicator">↩</span>}
+            </div>
+            {result.ignored.other.length > 0 && <div className="vt-label">Ignored: {result.ignored.other.map(i => players[i]).join(', ')}</div>}
+          </div>
+        </div>
+      )}
+
+      <div className="hole-delta-row">
+        {players.map((name, i) => (
+          <div key={i} className={`delta-cell${result.delta[i] > 0 ? ' pos' : result.delta[i] < 0 ? ' neg' : ' zero'}`}>
+            <div className="dc-name">{name}{birdies?.[i] ? ' 🐦' : ''}{result.greenieIdx === i ? ' G' : ''}{result.putt3Idx === i ? ' 3P' : ''}{result.sandyIdx === i ? ' S' : ''}</div>
+            <div className="dc-val">{result.delta[i] === 0 ? '—' : `${result.delta[i] > 0 ? '+' : '-'}$${Math.abs(result.delta[i]).toFixed(2)}`}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="summary-card">
+        <div className="section-label">Running Totals</div>
+        <div className="totals-list">
+          {[...Array(playerCount).keys()].sort((a, b) => totals[b] - totals[a]).map((i, rank) => (
+            <div key={i} className={`total-row${rank === 0 ? ' leader' : ''}`}>
+              <span className="rank-num">#{rank + 1}</span>
+              <span className="total-name">{players[i]}</span>
+              <span className={`total-amount${totals[i] >= 0 ? ' pos' : ' neg'}`}>{totals[i] >= 0 ? '+' : ''}${totals[i].toFixed(2)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <button className="next-hole-btn" onClick={onNext}>{isLast ? 'View Final Scorecard 🏆' : `Hole ${hole + 1} →`}</button>
+    </div>
+  );
+}
+
+function EditListScreen({ holeHistory, players, onSelectHole, onClose }) {
+  return (
+    <div className="screen">
+      <div className="edit-list-header">
+        <button className="icon-btn" onClick={onClose}>✕</button>
+        <h2 className="edit-list-title">Edit a Hole</h2>
+        <div style={{ width: 36 }} />
+      </div>
+      <div className="edit-hole-list">
+        {holeHistory.length === 0 && <div className="empty-edit">No holes completed yet.</div>}
+        {holeHistory.map((h, idx) => {
+          const birdieNames = (h.birdies || []).map((b, i) => b ? players[i].split(' ')[0] : null).filter(Boolean);
+          return (
+            <button key={idx} className="edit-hole-row" onClick={() => onSelectHole(idx)}>
+              <div className="ehr-hole">
+                <span className="ehr-hole-label">HOLE</span>
+                <span className="ehr-hole-num">{h.hole}</span>
+              </div>
+              <div className="ehr-info">
+                <div className="ehr-wolf">
+                  🐺 {players[h.wolfIdx]}{h.isLoneWolf ? ' ⚡' : h.partnerIdx != null ? ` & ${players[h.partnerIdx]}` : ''}
+                  {' '}· stake $${h.stake.toFixed(2)} · junk $${(h.junkValue || 0).toFixed(2)}
+                  {birdieNames.length > 0 && <span className="ehr-birdie-badge"> 🐦 {birdieNames.join(', ')}</span>}
+                </div>
+                <div className="ehr-scores">
+                  {players.map((p, i) => (
+                    <span key={i} className={`ehr-score-pill${h.birdies?.[i] ? ' birdie-pill' : ''}`}>
+                      {h.birdies?.[i] ? '🐦' : ''}{h.greenieIdx === i ? 'G' : ''}{h.putt3Idx === i ? '3P' : ''}{h.sandyIdx === i ? 'S' : ''}{p.split(' ')[0]}: {h.scores[i]}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <span className="edit-arrow">✏️</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function SummaryRows({ players, totals }) {
+  return (
+    <div className="totals-list">
+      {[...Array(players.length).keys()].sort((a, b) => totals[b] - totals[a]).map((i, rank) => (
+        <div key={i} className={`total-row${rank === 0 ? ' leader' : ''}`}>
+          <span className="rank-num">#{rank + 1}</span>
+          <span className="total-name">{players[i]}</span>
+          <span className={`total-amount${totals[i] >= 0 ? ' pos' : ' neg'}`}>{totals[i] >= 0 ? '+' : ''}${totals[i].toFixed(2)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function grossTotalsFor(history, startHole, endHole, playerCount) {
+  const totals = Array(playerCount).fill(0);
+  history.filter(h => h.hole >= startHole && h.hole <= endHole).forEach(h => {
+    h.scores.forEach((score, i) => totals[i] += score || 0);
+  });
+  return totals;
+}
+
+function GrossScorecardTable({ players, holeHistory, startHole, endHole, title, sectionLabel = 'TOTAL', grandTotals = null }) {
+  const holes = [];
+  for (let h = startHole; h <= endHole; h += 1) holes.push(h);
+  const byHole = Object.fromEntries(holeHistory.map(h => [h.hole, h]));
+  const sectionTotals = grossTotalsFor(holeHistory, startHole, endHole, players.length);
+
+  return (
+    <div className="golf-scorecard">
+      <div className="golf-scorecard-title">{title}</div>
+      <table className="golf-scorecard-table">
+        <thead>
+          <tr>
+            <th className="sticky-col">Player</th>
+            {holes.map(h => <th key={h}>{h}</th>)}
+            <th className="section-total">{sectionLabel}</th>
+            {grandTotals && <th className="grand-total">TOT</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {players.map((player, playerIdx) => (
+            <tr key={player}>
+              <td className="sticky-col">{player}</td>
+              {holes.map(h => <td key={h}>{byHole[h]?.scores?.[playerIdx] ?? '—'}</td>)}
+              <td className="section-total">{sectionTotals[playerIdx] || 0}</td>
+              {grandTotals && <td className="grand-total">{grandTotals[playerIdx] || 0}</td>}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function ScorecardScreen({ players, holeHistory, totals, totalHoles, mode = 'final', onNewRound, onEditHoles, onExportRound, onContinue }) {
+  const playerCount = players.length;
+  const grossFront = grossTotalsFor(holeHistory, 1, Math.min(9, totalHoles), playerCount);
+  const grossBack = grossTotalsFor(holeHistory, 10, 18, playerCount);
+  const grossTotal = grossFront.map((v, i) => v + grossBack[i]);
+  const gamblingFront = totalsThrough(holeHistory, 9, playerCount);
+  const gamblingFinal = totalHoles >= 18 ? totalsThrough(holeHistory, 18, playerCount) : totals;
+  const gamblingBack = gamblingFinal.map((v, i) => v - gamblingFront[i]);
+  const displayTotals = mode === 'checkpoint' ? gamblingFront : totals;
+  const sorted = [...Array(playerCount).keys()].sort((a, b) => displayTotals[b] - displayTotals[a]);
+
+  return (
+    <div className="screen">
+      <div className="scorecard-header">
+        <div className="trophy">🏆</div>
+        <h2>{mode === 'checkpoint' ? 'Front 9 Scorecard' : 'Final Scorecard'}</h2>
+      </div>
+
+      <div className="podium">
+        {sorted.map((pi, rank) => (
+          <div key={pi} className={`podium-card rank-${rank + 1}`}>
+            <div className="podium-rank">{rank === 0 ? '🥇' : rank === 1 ? '🥈' : rank === 2 ? '🥉' : `#${rank + 1}`}</div>
+            <div className="podium-name">{players[pi]}</div>
+            <div className={`podium-total${displayTotals[pi] >= 0 ? ' pos' : ' neg'}`}>{displayTotals[pi] >= 0 ? '+' : ''}${displayTotals[pi].toFixed(2)}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="golf-scorecard-wrap">
+        <GrossScorecardTable
+          players={players}
+          holeHistory={holeHistory}
+          startHole={1}
+          endHole={Math.min(9, totalHoles)}
+          title="Front 9"
+          sectionLabel="OUT"
+          grandTotals={mode === 'final' && totalHoles >= 18 ? grossTotal : null}
+        />
+        {mode === 'final' && totalHoles >= 18 && (
+          <GrossScorecardTable
+            players={players}
+            holeHistory={holeHistory}
+            startHole={10}
+            endHole={18}
+            title="Back 9"
+            sectionLabel="IN"
+            grandTotals={grossTotal}
+          />
+        )}
+      </div>
+
+      <div className="summary-card" style={{ marginBottom: 18 }}>
+        <div className="section-label">Gambling Summary</div>
+        <div className="summary-grid">
+          <div>
+            <div className="subsection-title">Through 9</div>
+            <SummaryRows players={players} totals={gamblingFront} />
+          </div>
+          {mode === 'final' && totalHoles >= 18 ? (
+            <>
+              <div>
+                <div className="subsection-title">Back 9</div>
+                <SummaryRows players={players} totals={gamblingBack} />
+              </div>
+              <div>
+                <div className="subsection-title">Through 18</div>
+                <SummaryRows players={players} totals={gamblingFinal} />
+              </div>
+            </>
+          ) : (
+            <div>
+              <div className="subsection-title">Current Total</div>
+              <SummaryRows players={players} totals={displayTotals} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="panel" style={{ marginBottom: 18 }}>
+        <div className="log-top-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <div className="section-label" style={{ margin: 0 }}>Hole by Hole Gambling</div>
+          <div className="top-bar-right">
+            <button className="edit-log-btn" onClick={onEditHoles}>✏️ Edit a Hole</button>
+            <button className="edit-log-btn" onClick={onExportRound}>⤓ Export Round</button>
+          </div>
+        </div>
+        <div className="log-table" style={{ '--player-count': playerCount }}>
+          <div className="log-header-row">
+            <span>#</span>
+            <span>Wolf</span>
+            {players.map(p => <span key={p}>{p.split(' ')[0]}</span>)}
+          </div>
+          {holeHistory.map(h => (
+            <div key={h.hole} className="log-data-row">
+              <span>{h.hole}</span>
+              <span>{players[h.wolfIdx].split(' ')[0]}{h.isLoneWolf ? '⚡' : ''}</span>
+              {h.delta.map((d, i) => (
+                <span key={i} className={d > 0 ? 'log-pos' : d < 0 ? 'log-neg' : ''}>
+                  {d > 0 ? '+' : ''}{d !== 0 ? `$${Math.abs(d).toFixed(0)}` : '—'}
+                </span>
+              ))}
+            </div>
+          ))}
+          <div className="log-total-row">
+            <span>TOT</span><span></span>
+            {displayTotals.map((t, i) => (
+              <span key={i} className={t >= 0 ? 'log-pos' : 'log-neg'}>{t >= 0 ? '+' : ''}${Math.abs(t).toFixed(2)}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="scorecard-actions">
+        {mode === 'checkpoint' ? (
+          <>
+            <button className="next-hole-btn" onClick={onContinue}>Continue to Back 9 →</button>
+            <button className="secondary-btn" onClick={onNewRound}>New Round</button>
+          </>
+        ) : (
+          <button className="new-round-btn" onClick={onNewRound}>New Round</button>
+        )}
+      </div>
+      <div className="footer-note">
+        This version is a single shareable HTML file with local browser persistence. Send the file to others and they can run it directly in a browser.
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [state, setState] = usePersistentState(makeInitialState());
+  const {
+    phase, players, playerCount, totalHoles, defaultStake, defaultJunk, currentHole, totals, holeHistory,
+    lastResult, lastScores, lastPartnerIdx, lastIsLoneWolf, lastBirdies, lastWolfIdx, editingHoleIdx, preEditPhase,
+  } = state;
+
+  const rotationWolfIdx = (currentHole - 1) % playerCount;
+  const editHole = editingHoleIdx != null ? holeHistory[editingHoleIdx] : null;
+
+  function patch(updates) {
+    setState(prev => ({ ...prev, ...updates }));
+  }
+
+  function startRound({ players, playerCount, defaultStake, totalHoles }) {
+    patch({
+      phase: 'hole',
+      players,
+      playerCount,
+      totalHoles,
+      defaultStake,
+      defaultJunk: 0,
+      currentHole: 1,
+      totals: EMPTY_TOTALS(playerCount),
+      holeHistory: [],
+      lastResult: null,
+      lastScores: null,
+      lastPartnerIdx: null,
+      lastIsLoneWolf: false,
+      lastBirdies: EMPTY_BIRDIES(playerCount),
+      lastWolfIdx: null,
+      editingHoleIdx: null,
+      preEditPhase: null,
+    });
+  }
+
+  function submitHole({ wolfIdx, scores, partnerIdx, isLoneWolf, birdies, greenieIdx, putt3Idx, sandyIdx, stake, junkValue }) {
+    const result = calculateHoleResult({ scores, wolfIdx, partnerIdx, isLoneWolf, stake, birdies, playerCount, junkValue, greenieIdx, putt3Idx, sandyIdx });
+    patch({
+      phase: 'result',
+      defaultStake: stake,
+      defaultJunk: junkValue,
+      totals: totals.map((t, i) => t + result.delta[i]),
+      lastResult: result,
+      lastScores: scores,
+      lastPartnerIdx: partnerIdx,
+      lastIsLoneWolf: isLoneWolf,
+      lastBirdies: birdies,
+      lastWolfIdx: wolfIdx,
+      holeHistory: [...holeHistory, {
+        hole: currentHole,
+        wolfIdx,
+        partnerIdx,
+        isLoneWolf,
+        scores,
+        birdies,
+        greenieIdx,
+        putt3Idx,
+        sandyIdx,
+        junkValue,
+        stake,
+        delta: result.delta,
+      }],
+    });
+  }
+
+  function goNext() {
+    if (currentHole >= totalHoles) {
+      patch({ phase: 'scorecard' });
+    } else if (totalHoles === 18 && currentHole === 9) {
+      patch({ phase: 'checkpoint' });
+    } else {
+      patch({ phase: 'hole', currentHole: currentHole + 1 });
+    }
+  }
+
+  function continueFromCheckpoint() {
+    patch({ phase: 'hole', currentHole: 10 });
+  }
+
+  function openEditList() {
+    patch({ preEditPhase: phase, phase: 'editList' });
+  }
+
+  function selectEditHole(idx) {
+    patch({ editingHoleIdx: idx, phase: 'edit' });
+  }
+
+  function saveEditedHole({ wolfIdx, scores, partnerIdx, isLoneWolf, birdies, greenieIdx, putt3Idx, sandyIdx, stake, junkValue }) {
+    const newHistory = holeHistory.map((item, i) => {
+      if (i !== editingHoleIdx) return item;
+      const result = calculateHoleResult({ scores, wolfIdx, partnerIdx, isLoneWolf, stake, birdies, playerCount, junkValue, greenieIdx, putt3Idx, sandyIdx });
+      return { ...item, wolfIdx, scores, partnerIdx, isLoneWolf, birdies, greenieIdx, putt3Idx, sandyIdx, junkValue, stake, delta: result.delta };
+    });
+
+    const newTotals = recomputeTotals(newHistory, playerCount);
+    const updates = {
+      holeHistory: newHistory,
+      totals: newTotals,
+      editingHoleIdx: null,
+      preEditPhase: null,
+      phase: preEditPhase || 'hole',
+    };
+
+    if (preEditPhase === 'result' && editingHoleIdx === holeHistory.length - 1) {
+      const updated = newHistory[editingHoleIdx];
+      const result = calculateHoleResult({
+        scores: updated.scores,
+        wolfIdx: updated.wolfIdx,
+        partnerIdx: updated.partnerIdx,
+        isLoneWolf: updated.isLoneWolf,
+        stake: updated.stake,
+        birdies: updated.birdies,
+        playerCount,
+        junkValue: updated.junkValue || 0,
+        greenieIdx: updated.greenieIdx ?? null,
+        putt3Idx: updated.putt3Idx ?? null,
+        sandyIdx: updated.sandyIdx ?? null,
+      });
+      updates.lastResult = result;
+      updates.lastScores = updated.scores;
+      updates.lastPartnerIdx = updated.partnerIdx;
+      updates.lastIsLoneWolf = updated.isLoneWolf;
+      updates.lastBirdies = updated.birdies;
+      updates.lastWolfIdx = updated.wolfIdx;
+      updates.defaultStake = updated.stake;
+      updates.defaultJunk = updated.junkValue || 0;
+    }
+
+    patch(updates);
+  }
+
+  function cancelEdit() {
+    patch({ editingHoleIdx: null, phase: preEditPhase || 'hole', preEditPhase: null });
+  }
+
+  function resetAll() {
+    const fresh = makeInitialState();
+    localStorage.removeItem(STORAGE_KEY);
+    setState(fresh);
+  }
+
+  function exportRound() {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `vegas-wolf-round-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  const showFrontNineBanner = totalHoles === 18 && currentHole === 9;
+
+  return (
+    <div className="app">
+      {phase !== 'setup' && (
+        <div className="top-bar">
+          <button className="edit-log-btn" onClick={resetAll}>Reset</button>
+          <div className="top-bar-right">
+            {holeHistory.length > 0 && phase !== 'editList' && phase !== 'edit' && (
+              <button className="edit-log-btn" onClick={openEditList}>✏️ Edit Past Hole</button>
+            )}
+            <button className="edit-log-btn" onClick={exportRound}>⤓ Export</button>
+          </div>
+        </div>
+      )}
+
+      {phase === 'setup' && <SetupScreen onStart={startRound} />}
+
+      {phase === 'hole' && (
+        <HoleScreen
+          hole={currentHole}
+          players={players}
+          playerCount={playerCount}
+          wolfIdx={rotationWolfIdx}
+          totalHoles={totalHoles}
+          initialStake={defaultStake}
+          initialJunk={defaultJunk}
+          onSubmit={submitHole}
+        />
+      )}
+
+      {phase === 'result' && lastResult && (
+        <ResultScreen
+          hole={currentHole}
+          result={lastResult}
+          players={players}
+          playerCount={playerCount}
+          wolfIdx={lastWolfIdx ?? rotationWolfIdx}
+          partnerIdx={lastPartnerIdx}
+          isLoneWolf={lastIsLoneWolf}
+          scores={lastScores}
+          birdies={lastBirdies}
+          totals={totals}
+          onNext={goNext}
+          isLast={currentHole >= totalHoles}
+          onEditHoles={openEditList}
+          showFrontNineBanner={showFrontNineBanner}
+        />
+      )}
+
+      {phase === 'editList' && (
+        <EditListScreen holeHistory={holeHistory} players={players} onSelectHole={selectEditHole} onClose={cancelEdit} />
+      )}
+
+      {phase === 'edit' && editHole && (
+        <HoleScreen
+          hole={editHole.hole}
+          players={players}
+          playerCount={playerCount}
+          wolfIdx={editHole.wolfIdx}
+          totalHoles={totalHoles}
+          initialPartner={editHole.partnerIdx}
+          initialIsLoneWolf={editHole.isLoneWolf}
+          initialScores={editHole.scores}
+          initialBirdies={editHole.birdies}
+          initialStake={editHole.stake}
+          initialJunk={editHole.junkValue || 0}
+          initialGreenieIdx={editHole.greenieIdx ?? null}
+          initialPutt3Idx={editHole.putt3Idx ?? null}
+          initialSandyIdx={editHole.sandyIdx ?? null}
+          initialWolfIdx={editHole.wolfIdx}
+          isEdit={true}
+          onSubmit={saveEditedHole}
+          onCancelEdit={cancelEdit}
+        />
+      )}
+
+      {phase === 'checkpoint' && (
+        <ScorecardScreen
+          players={players}
+          holeHistory={holeHistory}
+          totals={totals}
+          totalHoles={totalHoles}
+          mode="checkpoint"
+          onNewRound={resetAll}
+          onEditHoles={openEditList}
+          onExportRound={exportRound}
+          onContinue={continueFromCheckpoint}
+        />
+      )}
+
+      {phase === 'scorecard' && (
+        <ScorecardScreen
+          players={players}
+          holeHistory={holeHistory}
+          totals={totals}
+          totalHoles={totalHoles}
+          mode="final"
+          onNewRound={resetAll}
+          onEditHoles={openEditList}
+          onExportRound={exportRound}
+        />
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
